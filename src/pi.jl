@@ -414,7 +414,7 @@ print(read(pi, 23))
 1
 ...
 """
-function read(self::Pi, gpio)
+function Base.read(self::Pi, gpio)
     return _u2i(_pigpio_command(self.sl, _PI_CMD_READ, gpio, 0))
 end
 
