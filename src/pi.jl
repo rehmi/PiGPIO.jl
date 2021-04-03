@@ -89,45 +89,85 @@ end
 """
 Runs a pigpio socket command.
 
-sl:= command socket and lock.
-cmd:= the command to be executed.
-p1:= command parameter 1 (if applicable).
- p2:=  command parameter 2 (if applicable).
+    sl:= command socket and lock.
+    cmd:= the command to be executed.
+    p1:= command parameter 1 (if applicable).
+    p2:= command parameter 2 (if applicable).
 """
-function _pigpio_command(sl::SockLock, cmd::Integer, p1::Integer, p2::Integer, rl=true)
-    lock(sl.l)
-    write(sl.s, UInt32.([cmd, p1, p2, 0]))
-    out = IOBuffer(read(sl.s, 16))
-    msg = reinterpret(Cuint, take!(out))[4]
-    if rl
-        unlock(sl.l)
-    end
+function _pigpio_command_nolock(sl::SockLock, cmd::Integer, p1::Integer, p2::Integer)
+
+   # res = PI_CMD_INTERRUPTED
+   # sl.s.send(struct.pack('IIII', cmd, p1, p2, 0))
+   # dummy, res = struct.unpack('12sI', sl.s.recv(_SOCK_CMD_LEN))
+   # return res
+
+   write(sl.s, UInt32.([cmd, p1, p2, 0]))
+   out = IOBuffer(read(sl.s, 16)) #TODO: read into OutMsg.
+   msg = reinterpret(Cuint, take!(out))[4]
    return msg
+end
+
+"""
+Runs a pigpio socket command.
+
+    sl:= command socket and lock.
+    cmd:= the command to be executed.
+    p1:= command parameter 1 (if applicable).
+    p2:=  command parameter 2 (if applicable).
+"""
+function _pigpio_command(sl::SockLock, cmd::Integer, p1::Integer, p2::Integer)
+   return lock(()->_pigpio_command_nolock(sl, cmd, p1, p2), sl.l)
 end
 
 """
 Runs an extended pigpio socket command.
 
     sl:= command socket and lock.
-   cmd:= the command to be executed.
+    cmd:= the command to be executed.
     p1:= command parameter 1 (if applicable).
     p2:= command parameter 2 (if applicable).
     p3:= total size in bytes of following extents
-extents:= additional data blocks
+    extents:= additional data blocks
 """
-function _pigpio_command_ext(sl, cmd, p1, p2, p3, extents, rl=true)
-    ext = IOBuffer()
-    write(ext, Array(reinterpret(UInt8, [cmd, p1, p2, p3])))
-    for x in extents
-       write(ext, string(x))
-    end
-    lock(sl.l)
-    write(sl.s, ext)
-    msg = reinterpret(Cuint, sl.s)[4]
-    if rl
-         unlock(sl.l)
-    end
-    return res
+function _pigpio_command_ext_nolock(sl::SockLock, cmd::Integer, p1::Integer, p2::Integer, p3::Integer, extents)
+
+   # res = PI_CMD_INTERRUPTED
+   # ext = bytearray(struct.pack('IIII', cmd, p1, p2, p3))
+   # for x in extents:
+   #    if type(x) == type(""):
+   #       ext.extend(_b(x))
+   #    else:
+   #       ext.extend(x)
+   # sl.s.sendall(ext)
+   # dummy, res = struct.unpack('12sI', sl.s.recv(_SOCK_CMD_LEN))
+   # return res
+
+   ext = IOBuffer()
+   write(ext, UInt32.([cmd, p1, p2, p3]))
+   for x in extents
+      write(ext, x)
+   end
+   write(sl.s, ext)
+   @info sl sl.s sl.l
+   out = IOBuffer(read(sl.s, 16)) #TODO: read into OutMsg.
+   @info out
+   msg = reinterpret(Cuint, take!(out))[4]
+   return msg
+
+end
+
+"""
+Runs an extended pigpio socket command.
+
+    sl:= command socket and lock.
+    cmd:= the command to be executed.
+    p1:= command parameter 1 (if applicable).
+    p2:= command parameter 2 (if applicable).
+    p3:= total size in bytes of following extents
+    extents:= additional data blocks
+"""
+function _pigpio_command_ext(sl::SockLock, cmd::Integer, p1::Integer, p2::Integer, p3::Integer, extents)
+    return lock(()->_pigpio_command_ext_nolock(sl, cmd, p1, p2, p3, extents), sl.l)
 end
 
 """An ADT class to hold callback information
@@ -193,8 +233,7 @@ function remove(self::CallbackThread, callb)
 
         if newMonitor != self.monitor
             self.monitor = newMonitor
-            _pigpio_command(
-                self.control, _PI_CMD_NB, self.handle, self.monitor)
+            _pigpio_command(self.control, _PI_CMD_NB, self.handle, self.monitor)
         end
     end
 end
@@ -1163,11 +1202,11 @@ function custom_2(self, arg1=0, argx=[], retMax=8192)
     ## extension ##
     # s len argx bytes
 
-    # Don't raise exception.  Must release lock.
-    bytes = _u2i(_pigpio_command_ext(self.sl, _PI_CMD_CF2, arg1, retMax, length(argx), [argx], false))
-    data = bytes > 0 ? rxbuf(self, bytes) : ""
-    unlock(self.sl.l)
-    return bytes, data
+    return lock(self.sl.l) do
+        bytes = _u2i(_pigpio_command_ext_nolock(self.sl, _PI_CMD_CF2, arg1, retMax, length(argx), [argx]))
+        data = bytes > 0 ? rxbuf(self, bytes) : ""
+        return bytes, data
+    end
 end
 
 """

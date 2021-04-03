@@ -125,11 +125,11 @@ else
 ...
 """
 function spi_read(self::Pi, handle, count)
-    # Don't raise exception.  Must release lock.
-    bytes = _u2i(_pigpio_command(self.sl, _PI_CMD_SPIR, handle, count, false))
-    data = bytes > 0 ? rxbuf(self, bytes) : ""
-    unlock(self.sl.l)
-    return bytes, data
+    return lock(self.sl.l) do
+        bytes = _u2i(_pigpio_command_nolock(self.sl, _PI_CMD_SPIR, handle, count))
+        data = bytes > 0 ? rxbuf(self, bytes) : ""
+        return bytes, data
+    end
 end
 
 """
@@ -186,11 +186,11 @@ function spi_xfer(self::Pi, handle, data)
     ## extension ##
     # s len data bytes
 
-    # Don't raise exception.  Must release lock.
-    bytes = _u2i(_pigpio_command_ext(self.sl, _PI_CMD_SPIX, handle, 0, length(data), data, false))
-    data = bytes > 0 ? rxbuf(self, bytes) : ""
-    unlock(self.sl.l)
-    return bytes, data
+    return lock(self.sl.l) do
+        bytes = _u2i(_pigpio_command_ext_nolock(self.sl, _PI_CMD_SPIX, handle, 0, length(data), data))
+        data = bytes > 0 ? rxbuf(self, bytes) : ""
+        return bytes, data
+    end
 end
 
 """
@@ -285,11 +285,11 @@ if b > 0
 ...
 """
 function serial_read(self::Pi, handle, count)
-    # Don't raise exception.  Must release lock.
-    bytes = u2i(_pigpio_command(self.sl, _PI_CMD_SERR, handle, count, false))
-    data = bytes > 0 ? rxbuf(self, bytes) : ""
-    unlock(self.sl.l)
-    return bytes, data
+    return lock(self.sl.l) do
+        bytes = u2i(_pigpio_command_nolock(self.sl, _PI_CMD_SERR, handle, count))
+        data = bytes > 0 ? rxbuf(self, bytes) : ""
+        return bytes, data
+    end
 end
 
 """
@@ -389,11 +389,11 @@ For [*bb_bits*] 17-32 there will be four bytes per character.
 ...
 """
 function bb_serial_read(self, user_gpio)
-    # Don't raise exception.  Must release lock.
-    bytes = u2i(_pigpio_command(self.sl, _PI_CMD_SLR, user_gpio, 10000, false))
-    data = bytes > 0 ? rxbuf(self, bytes) : ""
-    unlock(self.sl.l)
-    return bytes, data
+    return lock(self.sl.l) do
+        bytes = u2i(_pigpio_command_nolock(self.sl, _PI_CMD_SLR, user_gpio, 10000))
+        data = bytes > 0 ? rxbuf(self, bytes) : ""
+        return bytes, data
+    end
 end
 
 """
