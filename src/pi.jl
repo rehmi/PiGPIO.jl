@@ -96,8 +96,8 @@ p1:= command parameter 1 (if applicable).
 """
 function _pigpio_command(sl::SockLock, cmd::Integer, p1::Integer, p2::Integer, rl=true)
     lock(sl.l)
-    Base.write(sl.s, UInt32.([cmd, p1, p2, 0]))
-    out = IOBuffer(Base.read(sl.s, 16))
+    write(sl.s, UInt32.([cmd, p1, p2, 0]))
+    out = IOBuffer(read(sl.s, 16))
     msg = reinterpret(Cuint, take!(out))[4]
     if rl
         unlock(sl.l)
@@ -117,7 +117,7 @@ extents:= additional data blocks
 """
 function _pigpio_command_ext(sl, cmd, p1, p2, p3, extents, rl=true)
     ext = IOBuffer()
-    Base.write(ext, Array(reinterpret(UInt8, [cmd, p1, p2, p3])))
+    write(ext, Array(reinterpret(UInt8, [cmd, p1, p2, p3])))
     for x in extents
        write(ext, string(x))
     end
@@ -171,7 +171,7 @@ end
 function stop(self::CallbackThread)
     if self.go
         self.go = false
-        Base.write(self.sl.s, _PI_CMD_NC, self.handle, 0, 0)
+        write(self.sl.s, _PI_CMD_NC, self.handle, 0, 0)
     end
 end
 
