@@ -439,7 +439,7 @@ print(read(pi, 17))
 1
 ...
 """
-function write(self::Pi, gpio, level)
+function Base.write(self::Pi, gpio, level)
     return _u2i(_pigpio_command(self.sl, _PI_CMD_WRITE, gpio, level))
 end
 
