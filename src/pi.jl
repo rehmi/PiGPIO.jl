@@ -102,7 +102,7 @@ function _pigpio_command_nolock(sl::SockLock, cmd::Integer, p1::Integer, p2::Int
    # return res
 
    write(sl.s, UInt32.([cmd, p1, p2, 0]))
-   out = IOBuffer(read(sl.s, 16)) #TODO: read into OutMsg.
+   out = IOBuffer(read(sl.s, _SOCK_CMD_LEN)) #TODO: read into OutMsg.
    msg = reinterpret(Cuint, take!(out))[4]
    return msg
 end
@@ -149,7 +149,7 @@ function _pigpio_command_ext_nolock(sl::SockLock, cmd::Integer, p1::Integer, p2:
    end
    write(sl.s, ext)
    @info sl sl.s sl.l
-   out = IOBuffer(read(sl.s, 16)) #TODO: read into OutMsg.
+   out = IOBuffer(read(sl.s, _SOCK_CMD_LEN)) #TODO: read into OutMsg.
    @info out
    msg = reinterpret(Cuint, take!(out))[4]
    return msg
