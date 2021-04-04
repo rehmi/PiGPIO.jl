@@ -35,7 +35,7 @@ Count (8 bits): A byte defining the length of a block operation.
 h = i2c_open(pi, 1, 0x53) # open device at address 0x53 on bus 1
 ...
 """
-function i2c_open(self::Pi, i2c_bus, i2c_address, i2c_flags=0)
+function i2c_open(self::Pi, i2c_bus::Integer, i2c_address::Integer, i2c_flags::Integer=0)
     # I p1 i2c_bus
     # I p2 i2c_addr
     # I p3 4
