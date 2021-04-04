@@ -331,7 +331,8 @@ end
 
 """Returns count bytes from the command socket."""
 function rxbuf(self::Pi, count)
-    ext = readbytes(self.sl.s, count, all)
+    ext = Vector{UInt8}(undef, count)
+    readbytes!(self.sl.s, ext; all=true)
     return ext
 end
 
@@ -1172,7 +1173,7 @@ function custom_2(self, arg1=0, argx=[], retMax=8192)
     bytes = u2i(_pigpio_command_ext(
     self.sl, _PI_CMD_CF2, arg1, retMax, length(argx), [argx], false))
     if bytes > 0
-        data = rxbuf(bytes)
+        data = rxbuf(self, bytes)
     else
         data = ""
     end

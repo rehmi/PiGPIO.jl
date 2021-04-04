@@ -333,7 +333,7 @@ function i2c_read_block_data(self::Pi, handle, reg)
     # Don't raise exception.  Must release lock.
     bytes = u2i(_pigpio_command(self.sl, _PI_CMD_I2CRK, handle, reg, false))
     if bytes > 0
-        data = rxbuf(bytes)
+        data = rxbuf(self, bytes)
     else
         data = ""
     end
@@ -608,7 +608,7 @@ function i2c_zip(self::Pi, handle, data)
     bytes = u2i(_pigpio_command_ext(
     self.sl, _PI_CMD_I2CZ, handle, 0, length(data), data, false))
     if bytes > 0
-        data = self._rxbuf(bytes)
+        data = rxbuf(self, bytes)
     else
         data = ""
     end
@@ -747,7 +747,7 @@ function bb_i2c_zip(self::Pi, SDA, data)
     bytes = u2i(_pigpio_command_ext(
     self.sl, _PI_CMD_BI2CZ, SDA, 0, length(data), [data], false))
     if bytes > 0
-        data = self._rxbuf(bytes)
+        data = rxbuf(self, bytes)
     else
         data = ""
     end

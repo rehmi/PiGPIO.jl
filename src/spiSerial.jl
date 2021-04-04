@@ -130,7 +130,7 @@ function spi_read(self::Pi, handle, count)
     bytes = u2i(_pigpio_command(
     self.sl, _PI_CMD_SPIR, handle, count, false))
     if bytes > 0
-        data = rxbuf(bytes)
+        data = rxbuf(self, bytes)
     else
         data = ""
     end
@@ -197,7 +197,7 @@ function spi_xfer(self::Pi, handle, data)
     bytes = u2i(_pigpio_command_ext(
     self.sl, _PI_CMD_SPIX, handle, 0, length(data), data, false))
     if bytes > 0
-        data = rxbuf(bytes)
+        data = rxbuf(self, bytes)
     else
         data = ""
     end
@@ -303,7 +303,7 @@ function serial_read(self::Pi, handle, count)
     bytes = u2i(
     _pigpio_command(self.sl, _PI_CMD_SERR, handle, count, false))
     if bytes > 0
-        data = rxbuf(bytes)
+        data = rxbuf(self, bytes)
     else
         data = ""
     end
@@ -414,7 +414,7 @@ function bb_serial_read(self, user_gpio)
     bytes = u2i(
         _pigpio_command(self.sl, _PI_CMD_SLR, user_gpio, 10000, false))
     if bytes > 0
-        data = self._rxbuf(bytes)
+        data = rxbuf(self, bytes)
     else
         data = ""
     end
