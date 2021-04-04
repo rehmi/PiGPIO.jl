@@ -1165,11 +1165,7 @@ function custom_2(self, arg1=0, argx=[], retMax=8192)
 
     # Don't raise exception.  Must release lock.
     bytes = _u2i(_pigpio_command_ext(self.sl, _PI_CMD_CF2, arg1, retMax, length(argx), [argx], false))
-    if bytes > 0
-        data = rxbuf(self, bytes)
-    else
-        data = ""
-    end
+    data = bytes > 0 ? rxbuf(self, bytes) : ""
     unlock(self.sl.l)
     return bytes, data
 end

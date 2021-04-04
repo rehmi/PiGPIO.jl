@@ -127,11 +127,7 @@ else
 function spi_read(self::Pi, handle, count)
     # Don't raise exception.  Must release lock.
     bytes = _u2i(_pigpio_command(self.sl, _PI_CMD_SPIR, handle, count, false))
-    if bytes > 0
-        data = rxbuf(self, bytes)
-    else
-        data = ""
-    end
+    data = bytes > 0 ? rxbuf(self, bytes) : ""
     unlock(self.sl.l)
     return bytes, data
 end
@@ -192,11 +188,7 @@ function spi_xfer(self::Pi, handle, data)
 
     # Don't raise exception.  Must release lock.
     bytes = _u2i(_pigpio_command_ext(self.sl, _PI_CMD_SPIX, handle, 0, length(data), data, false))
-    if bytes > 0
-        data = rxbuf(self, bytes)
-    else
-        data = ""
-    end
+    data = bytes > 0 ? rxbuf(self, bytes) : ""
     unlock(self.sl.l)
     return bytes, data
 end
@@ -295,11 +287,7 @@ if b > 0
 function serial_read(self::Pi, handle, count)
     # Don't raise exception.  Must release lock.
     bytes = u2i(_pigpio_command(self.sl, _PI_CMD_SERR, handle, count, false))
-    if bytes > 0
-        data = rxbuf(self, bytes)
-    else
-        data = ""
-    end
+    data = bytes > 0 ? rxbuf(self, bytes) : ""
     unlock(self.sl.l)
     return bytes, data
 end
@@ -403,11 +391,7 @@ For [*bb_bits*] 17-32 there will be four bytes per character.
 function bb_serial_read(self, user_gpio)
     # Don't raise exception.  Must release lock.
     bytes = u2i(_pigpio_command(self.sl, _PI_CMD_SLR, user_gpio, 10000, false))
-    if bytes > 0
-        data = rxbuf(self, bytes)
-    else
-        data = ""
-    end
+    data = bytes > 0 ? rxbuf(self, bytes) : ""
     unlock(self.sl.l)
     return bytes, data
 end
