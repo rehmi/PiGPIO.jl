@@ -148,7 +148,6 @@ function _pigpio_command_ext_nolock(sl::SockLock, cmd::Integer, p1::Integer, p2:
       write(ext, x)
    end
    write(sl.s, ext)
-   @info sl sl.s sl.l
    out = IOBuffer(read(sl.s, _SOCK_CMD_LEN)) #TODO: read into OutMsg.
    @info out
    msg = reinterpret(Cuint, take!(out))[4]
