@@ -95,7 +95,7 @@ i2c_write_byte(pi, 2, 0x23) # send byte 0x23 to device 2
 ...
 """
 function i2c_write_byte(self::Pi, handle, byte_val)
-    return _u2i(_pigpio_command(self.sl, _PI_CMD_I2CWS, handle, byte_val))
+    return _u2i(_pigpio_command(self.sl, _PI_CMD_I2CWS, handle, UInt8(byte_val)))
 end
 
 """
