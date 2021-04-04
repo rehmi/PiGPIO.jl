@@ -41,7 +41,7 @@ function i2c_open(self::Pi, i2c_bus::Integer, i2c_address::Integer, i2c_flags::I
     # I p3 4
     ## extension ##
     # I i2c_flags
-    extents = [pack("I", i2c_flags)]
+    extents = [UInt32(i2c_flags)]
     return _u2i(_pigpio_command_ext(self.sl, _PI_CMD_I2CO, i2c_bus, i2c_address, 4, extents))
 end
 
