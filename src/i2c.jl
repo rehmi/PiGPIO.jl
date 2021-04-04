@@ -42,8 +42,7 @@ function i2c_open(self::Pi, i2c_bus, i2c_address, i2c_flags=0)
     ## extension ##
     # I i2c_flags
     extents = [pack("I", i2c_flags)]
-    return _u2i(_pigpio_command_ext(
-        self.sl, _PI_CMD_I2CO, i2c_bus, i2c_address, 4, extents))
+    return _u2i(_pigpio_command_ext(self.sl, _PI_CMD_I2CO, i2c_bus, i2c_address, 4, extents))
 end
 
 """
@@ -96,8 +95,7 @@ i2c_write_byte(pi, 2, 0x23) # send byte 0x23 to device 2
 ...
 """
 function i2c_write_byte(self::Pi, handle, byte_val)
-    return _u2i(
-        _pigpio_command(self.sl, _PI_CMD_I2CWS, handle, byte_val))
+    return _u2i(_pigpio_command(self.sl, _PI_CMD_I2CWS, handle, byte_val))
 end
 
 """
@@ -147,8 +145,7 @@ function i2c_write_byte_data(self::Pi, handle, reg, byte_val)
     # I byte_val
     extents = IOBuffer()
     write(extents, byte_val)
-    return _u2i(_pigpio_command_ext(
-        self.sl, _PI_CMD_I2CWB, handle, reg, 4, extents))
+    return _u2i(_pigpio_command_ext(self.sl, _PI_CMD_I2CWB, handle, reg, 4, extents))
 end
 
 """
@@ -180,8 +177,7 @@ function i2c_write_word_data(self::Pi, handle, reg, word_val)
     # I word_val
     extents = IOBuffer()
     write(extents, word_val)
-    return _u2i(_pigpio_command_ext(
-        self.sl, _PI_CMD_I2CWW, handle, reg, 4, extents))
+    return _u2i(_pigpio_command_ext(self.sl, _PI_CMD_I2CWW, handle, reg, 4, extents))
 end
 
 """
@@ -259,8 +255,7 @@ function i2c_process_call(self, handle, reg, word_val)
     # I word_val
     extents = IOBuffer()
     write(extents, word_val)
-    return _u2i(_pigpio_command_ext(
-        self.sl, _PI_CMD_I2CPC, handle, reg, 4, extents))
+    return _u2i(_pigpio_command_ext(self.sl, _PI_CMD_I2CPC, handle, reg, 4, extents))
 end
 
 """
@@ -294,8 +289,7 @@ function i2c_write_block_data(self, handle, reg, data)
 ## extension ##
 # s len data bytes
     if length(data)
-        return _u2i(_pigpio_command_ext(
-            self.sl, _PI_CMD_I2CWK, handle, reg, length(data), data))
+        return _u2i(_pigpio_command_ext(self.sl, _PI_CMD_I2CWK, handle, reg, length(data), data))
     else
         return 0
     end
@@ -331,7 +325,7 @@ else
 """
 function i2c_read_block_data(self::Pi, handle, reg)
     # Don't raise exception.  Must release lock.
-    bytes = u2i(_pigpio_command(self.sl, _PI_CMD_I2CRK, handle, reg, false))
+    bytes = _u2i(_pigpio_command(self.sl, _PI_CMD_I2CRK, handle, reg, false))
     if bytes > 0
         data = rxbuf(self, bytes)
     else
@@ -384,8 +378,7 @@ function i2c_block_process_call(self::Pi, handle, reg, data)
     # s len data bytes
 
     # Don't raise exception.  Must release lock.
-    bytes = u2i(_pigpio_command_ext(
-    self.sl, _PI_CMD_I2CPK, handle, reg, length(data), data, false))
+    bytes = _u2i(_pigpio_command_ext(self.sl, _PI_CMD_I2CPK, handle, reg, length(data), data, false))
     if bytes > 0
         data = rxbuf(self, bytes)
     else
@@ -424,8 +417,7 @@ function i2c_write_i2c_block_data(self::Pi, handle, reg, data)
     ## extension ##
     # s len data bytes
     if length(data) > 0
-        return _u2i(_pigpio_command_ext(
-            self.sl, _PI_CMD_I2CWI, handle, reg, length(data), [data]))
+        return _u2i(_pigpio_command_ext(self.sl, _PI_CMD_I2CWI, handle, reg, length(data), [data]))
     else
         return 0
     end
@@ -466,8 +458,7 @@ function i2c_read_i2c_block_data(self::Pi, handle, reg, count)
     extents = IOBuffer()
     write(extents, count)
     # Don't raise exception.  Must release lock.
-    bytes = u2i(_pigpio_command_ext(
-    self.sl, _PI_CMD_I2CRI, handle, reg, 4, extents, false))
+    bytes = _u2i(_pigpio_command_ext(self.sl, _PI_CMD_I2CRI, handle, reg, 4, extents, false))
     if bytes > 0
         data = rxbuf(self, bytes)
     else
@@ -500,8 +491,7 @@ the error code).
 """
 function i2c_read_device(self::Pi, handle, count)
     # Don't raise exception.  Must release lock.
-    bytes = u2i(
-    _pigpio_command(self.sl, _PI_CMD_I2CRD, handle, count, false))
+    bytes = _u2i(_pigpio_command(self.sl, _PI_CMD_I2CRD, handle, count, false))
     if bytes > 0
         data = rxbuf(self, bytes)
     else
@@ -538,8 +528,7 @@ function i2c_write_device(self::Pi, handle, data)
     ## extension ##
     # s len data bytes
     if length(data)
-        return _u2i(_pigpio_command_ext(
-            self.sl, _PI_CMD_I2CWD, handle, 0, length(data), data))
+        return _u2i(_pigpio_command_ext(self.sl, _PI_CMD_I2CWD, handle, 0, length(data), data))
     else
         return 0
     end
@@ -605,8 +594,7 @@ function i2c_zip(self::Pi, handle, data)
     # s len data bytes
 
     # Don't raise exception.  Must release lock.
-    bytes = u2i(_pigpio_command_ext(
-    self.sl, _PI_CMD_I2CZ, handle, 0, length(data), data, false))
+    bytes = _u2i(_pigpio_command_ext(self.sl, _PI_CMD_I2CZ, handle, 0, length(data), data, false))
     if bytes > 0
         data = rxbuf(self, bytes)
     else
@@ -652,8 +640,7 @@ function bb_i2c_open(self::Pi, SDA, SCL, baud=100000)
     # I baud
     extents = IOBuffer()
     write(extents, baud)
-    return _u2i(_pigpio_command_ext(
-        self.sl, _PI_CMD_BI2CO, SDA, SCL, 4, extents))
+    return _u2i(_pigpio_command_ext(self.sl, _PI_CMD_BI2CO, SDA, SCL, 4, extents))
 end
 
 """
@@ -744,8 +731,7 @@ function bb_i2c_zip(self::Pi, SDA, data)
     # s len data bytes
 
     # Don't raise exception.  Must release lock.
-    bytes = u2i(_pigpio_command_ext(
-    self.sl, _PI_CMD_BI2CZ, SDA, 0, length(data), [data], false))
+    bytes = _u2i(_pigpio_command_ext(self.sl, _PI_CMD_BI2CZ, SDA, 0, length(data), [data], false))
     if bytes > 0
         data = rxbuf(self, bytes)
     else

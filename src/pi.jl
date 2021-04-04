@@ -462,8 +462,7 @@ set_PWM_dutycycle(pi, 4, 255) # PWM full on
 ...
 """
 function set_PWM_dutycycle(self::Pi, user_gpio, dutycycle)
-    return _u2i(_pigpio_command(
-        self.sl, _PI_CMD_PWM, user_gpio, Int(dutycycle)))
+    return _u2i(_pigpio_command(self.sl, _PI_CMD_PWM, user_gpio, Int(dutycycle)))
 end
 
 """
@@ -608,8 +607,7 @@ print(get_PWM_frequency(pi, 4))
 ...
 """
 function set_PWM_frequency(self::Pi, user_gpio, frequency)
-    return _u2i(
-        _pigpio_command(self.sl, _PI_CMD_PFS, user_gpio, frequency))
+    return _u2i(_pigpio_command(self.sl, _PI_CMD_PFS, user_gpio, frequency))
 end
 
 """
@@ -667,8 +665,7 @@ set_servo_pulsewidth(pi, 17, 2000) # safe clockwise
 ...
 """
 function set_servo_pulsewidth(self::Pi, user_gpio, pulsewidth)
-    return _u2i(_pigpio_command(
-        self.sl, _PI_CMD_SERVO, user_gpio, int(pulsewidth)))
+    return _u2i(_pigpio_command(self.sl, _PI_CMD_SERVO, user_gpio, int(pulsewidth)))
 end
 
 """
@@ -832,8 +829,7 @@ set_watchdog(pi, 23, 0)    # cancel watchdog on GPIO 23
 ...
 """
 function set_watchdog(self::Pi, user_gpio, wdog_timeout)
-    return _u2i(_pigpio_command(
-        self.sl, _PI_CMD_WDOG, user_gpio, Int(wdog_timeout)))
+    return _u2i(_pigpio_command(self.sl, _PI_CMD_WDOG, user_gpio, Int(wdog_timeout)))
 end
 
 """
@@ -1042,8 +1038,7 @@ function hardware_PWM(self::Pi, gpio, PWMfreq, PWMduty)
 # I PWMdutycycle
     extents = IOBuffer()
     extents =write(extents, 10)
-    return _u2i(_pigpio_command_ext(
-        self.sl, _PI_CMD_HP, gpio, PWMfreq, 4, extents))
+    return _u2i(_pigpio_command_ext(self.sl, _PI_CMD_HP, gpio, PWMfreq, 4, extents))
 end
 
 """
@@ -1134,8 +1129,7 @@ function custom_1(self, arg1=0, arg2=0, argx=[])
     ## extension ##
     # s len argx bytes
 
-    return u2i(_pigpio_command_ext(
-        self.sl, _PI_CMD_CF1, arg1, arg2, length(argx), [argx]))
+    return _u2i(_pigpio_command_ext(self.sl, _PI_CMD_CF1, arg1, arg2, length(argx), [argx]))
 end
 
 """
@@ -1170,8 +1164,7 @@ function custom_2(self, arg1=0, argx=[], retMax=8192)
     # s len argx bytes
 
     # Don't raise exception.  Must release lock.
-    bytes = u2i(_pigpio_command_ext(
-    self.sl, _PI_CMD_CF2, arg1, retMax, length(argx), [argx], false))
+    bytes = _u2i(_pigpio_command_ext(self.sl, _PI_CMD_CF2, arg1, retMax, length(argx), [argx], false))
     if bytes > 0
         data = rxbuf(self, bytes)
     else

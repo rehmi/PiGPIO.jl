@@ -89,8 +89,7 @@ function spi_open(self::Pi, spi_channel, baud, spi_flags=0)
     # I spi_flags
     extents=IOBuffer()
     write(extents, spi_flags::Cint)
-    return _u2i(_pigpio_command_ext(
-        self.sl, _PI_CMD_SPIO, spi_channel, baud, 4, extents))
+    return _u2i(_pigpio_command_ext(self.sl, _PI_CMD_SPIO, spi_channel, baud, 4, extents))
 end
 
 """
@@ -127,8 +126,7 @@ else
 """
 function spi_read(self::Pi, handle, count)
     # Don't raise exception.  Must release lock.
-    bytes = u2i(_pigpio_command(
-    self.sl, _PI_CMD_SPIR, handle, count, false))
+    bytes = _u2i(_pigpio_command(self.sl, _PI_CMD_SPIR, handle, count, false))
     if bytes > 0
         data = rxbuf(self, bytes)
     else
@@ -160,8 +158,7 @@ function spi_write(self::Pi, handle, data)
     # I p3 len
     ## extension ##
     # s len data bytes
-    return _u2i(_pigpio_command_ext(
-        self.sl, _PI_CMD_SPIW, handle, 0, length(data), data))
+    return _u2i(_pigpio_command_ext(self.sl, _PI_CMD_SPIW, handle, 0, length(data), data))
 end
 
 """
@@ -194,8 +191,7 @@ function spi_xfer(self::Pi, handle, data)
     # s len data bytes
 
     # Don't raise exception.  Must release lock.
-    bytes = u2i(_pigpio_command_ext(
-    self.sl, _PI_CMD_SPIX, handle, 0, length(data), data, false))
+    bytes = _u2i(_pigpio_command_ext(self.sl, _PI_CMD_SPIX, handle, 0, length(data), data, false))
     if bytes > 0
         data = rxbuf(self, bytes)
     else
@@ -234,8 +230,7 @@ function serial_open(self::Pi, tty, baud, ser_flags=0)
     # I p3 len
     ## extension ##
     # s len data bytes
-    return _u2i(_pigpio_command_ext(
-        self.sl, _PI_CMD_SERO, baud, ser_flags, length(tty), [tty]))
+    return _u2i(_pigpio_command_ext(self.sl, _PI_CMD_SERO, baud, ser_flags, length(tty), [tty]))
 end
 
 """
@@ -277,8 +272,7 @@ serial_write_byte(h1, ord(pi, 'Z'))
 ...
 """
 function serial_write_byte(self::Pi, handle, byte_val)
-    return _u2i(
-        _pigpio_command(self.sl, _PI_CMD_SERWB, handle, byte_val))
+    return _u2i(_pigpio_command(self.sl, _PI_CMD_SERWB, handle, byte_val))
 end
 
 """
@@ -300,8 +294,7 @@ if b > 0
 """
 function serial_read(self::Pi, handle, count)
     # Don't raise exception.  Must release lock.
-    bytes = u2i(
-    _pigpio_command(self.sl, _PI_CMD_SERR, handle, count, false))
+    bytes = u2i(_pigpio_command(self.sl, _PI_CMD_SERR, handle, count, false))
     if bytes > 0
         data = rxbuf(self, bytes)
     else
@@ -334,8 +327,7 @@ function serial_write(self::Pi, handle, data)
     ## extension ##
     # s len data bytes
 
-    return _u2i(_pigpio_command_ext(
-        self.sl, _PI_CMD_SERW, handle, 0, length(data), [data]))
+    return _u2i(_pigpio_command_ext(self.sl, _PI_CMD_SERW, handle, 0, length(data), [data]))
 end
 
 """
@@ -383,8 +375,7 @@ function bb_serial_read_open(self, user_gpio, baud, bb_bits=8)
     # I bb_bits
     extents = IOBuffer()
     write(extents, bb_bits::Cuint)
-    return _u2i(_pigpio_command_ext(
-        self.sl, _PI_CMD_SLRO, user_gpio, baud, 4, extents))
+    return _u2i(_pigpio_command_ext(self.sl, _PI_CMD_SLRO, user_gpio, baud, 4, extents))
 end
 
 """
@@ -411,8 +402,7 @@ For [*bb_bits*] 17-32 there will be four bytes per character.
 """
 function bb_serial_read(self, user_gpio)
     # Don't raise exception.  Must release lock.
-    bytes = u2i(
-        _pigpio_command(self.sl, _PI_CMD_SLR, user_gpio, 10000, false))
+    bytes = u2i(_pigpio_command(self.sl, _PI_CMD_SLR, user_gpio, 10000, false))
     if bytes > 0
         data = rxbuf(self, bytes)
     else
