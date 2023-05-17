@@ -99,8 +99,7 @@ function wave_add_generic(self::Pi, pulses)
         ext.extend(pack("III", p.gpio_on, p.gpio_off, p.delay))
         end
         extents = [ext]
-        return _u2i(_pigpio_command_ext(
-            self.sl, _PI_CMD_WVAG, 0, 0, length(pulses)*12, extents))
+        return _u2i(_pigpio_command_ext(self.sl, _PI_CMD_WVAG, 0, 0, length(pulses)*12, extents))
     else
         return 0
     end
@@ -148,8 +147,7 @@ function wave_add_serial(
     self::Pi, user_gpio, baud, data, offset=0, bb_bits=8, bb_stop=2)
     if length(data)
         extents = [pack("III", bb_bits, bb_stop, offset), data]
-        return _u2i(_pigpio_command_ext(
-            self.sl, _PI_CMD_WVAS, user_gpio, baud, length(data)+12, extents))
+        return _u2i(_pigpio_command_ext(self.sl, _PI_CMD_WVAS, user_gpio, baud, length(data)+12, extents))
     else
         return 0
     end
@@ -457,8 +455,7 @@ function wave_chain(self::Pi, data)
 # I p3 len
 ## extension ##
 # s len data bytes
-    return _u2i(_pigpio_command_ext(
-        self.sl, _PI_CMD_WVCHA, 0, 0, length(data), [data]))
+    return _u2i(_pigpio_command_ext(self.sl, _PI_CMD_WVCHA, 0, 0, length(data), [data]))
 end
 
 """

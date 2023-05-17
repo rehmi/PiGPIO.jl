@@ -35,12 +35,7 @@ level not 0-1
 ...
 """
 function error_text(errnum)
-    for e in _errors
-        if e[0] == errnum
-           return e[1]
-       end
-    end
-    return "unknown error ($ernum)"
+    return get(_errors, errnum, "unknown error ($errnum)")
 end
 
 """
@@ -94,45 +89,84 @@ end
 """
 Runs a pigpio socket command.
 
-sl:= command socket and lock.
-cmd:= the command to be executed.
-p1:= command parameter 1 (if applicable).
- p2:=  command parameter 2 (if applicable).
+    sl:= command socket and lock.
+    cmd:= the command to be executed.
+    p1:= command parameter 1 (if applicable).
+    p2:= command parameter 2 (if applicable).
 """
-function _pigpio_command(sl::SockLock, cmd::Integer, p1::Integer, p2::Integer, rl=true)
-    lock(sl.l)
-    Base.write(sl.s, UInt32.([cmd, p1, p2, 0]))
-    out = IOBuffer(Base.read(sl.s, 16))
-    msg = reinterpret(Cuint, take!(out))[4]
-    if rl
-        unlock(sl.l)
-    end
+function _pigpio_command_nolock(sl::SockLock, cmd::Integer, p1::Integer, p2::Integer)
+
+   # res = PI_CMD_INTERRUPTED
+   # sl.s.send(struct.pack('IIII', cmd, p1, p2, 0))
+   # dummy, res = struct.unpack('12sI', sl.s.recv(_SOCK_CMD_LEN))
+   # return res
+
+   write(sl.s, UInt32.([cmd, p1, p2, 0]))
+   out = IOBuffer(read(sl.s, _SOCK_CMD_LEN)) #TODO: read into OutMsg.
+   msg = reinterpret(Cuint, take!(out))[4]
    return msg
+end
+
+"""
+Runs a pigpio socket command.
+
+    sl:= command socket and lock.
+    cmd:= the command to be executed.
+    p1:= command parameter 1 (if applicable).
+    p2:=  command parameter 2 (if applicable).
+"""
+function _pigpio_command(sl::SockLock, cmd::Integer, p1::Integer, p2::Integer)
+   return lock(()->_pigpio_command_nolock(sl, cmd, p1, p2), sl.l)
 end
 
 """
 Runs an extended pigpio socket command.
 
     sl:= command socket and lock.
-   cmd:= the command to be executed.
+    cmd:= the command to be executed.
     p1:= command parameter 1 (if applicable).
     p2:= command parameter 2 (if applicable).
     p3:= total size in bytes of following extents
-extents:= additional data blocks
+    extents:= additional data blocks
 """
-function _pigpio_command_ext(sl, cmd, p1, p2, p3, extents, rl=true)
-    ext = IOBuffer()
-    Base.write(ext, Array(reinterpret(UInt8, [cmd, p1, p2, p3])))
-    for x in extents
-       write(ext, string(x))
-    end
-    lock(sl.l)
-    write(sl.s, ext)
-    msg = reinterpret(Cuint, sl.s)[4]
-    if rl
-         unlock(sl.l)
-    end
-    return res
+function _pigpio_command_ext_nolock(sl::SockLock, cmd::Integer, p1::Integer, p2::Integer, p3::Integer, extents)
+
+   # res = PI_CMD_INTERRUPTED
+   # ext = bytearray(struct.pack('IIII', cmd, p1, p2, p3))
+   # for x in extents:
+   #    if type(x) == type(""):
+   #       ext.extend(_b(x))
+   #    else:
+   #       ext.extend(x)
+   # sl.s.sendall(ext)
+   # dummy, res = struct.unpack('12sI', sl.s.recv(_SOCK_CMD_LEN))
+   # return res
+
+   ext = IOBuffer()
+   write(ext, UInt32.([cmd, p1, p2, p3]))
+   for x in extents
+      write(ext, x)
+   end
+   write(sl.s, ext)
+   out = IOBuffer(read(sl.s, _SOCK_CMD_LEN)) #TODO: read into OutMsg.
+   @info out
+   msg = reinterpret(Cuint, take!(out))[4]
+   return msg
+
+end
+
+"""
+Runs an extended pigpio socket command.
+
+    sl:= command socket and lock.
+    cmd:= the command to be executed.
+    p1:= command parameter 1 (if applicable).
+    p2:= command parameter 2 (if applicable).
+    p3:= total size in bytes of following extents
+    extents:= additional data blocks
+"""
+function _pigpio_command_ext(sl::SockLock, cmd::Integer, p1::Integer, p2::Integer, p3::Integer, extents)
+    return lock(()->_pigpio_command_ext_nolock(sl, cmd, p1, p2, p3, extents), sl.l)
 end
 
 """An ADT class to hold callback information
@@ -176,7 +210,7 @@ end
 function stop(self::CallbackThread)
     if self.go
         self.go = false
-        Base.write(self.sl.s, _PI_CMD_NC, self.handle, 0, 0)
+        write(self.sl.s, _PI_CMD_NC, self.handle, 0, 0)
     end
 end
 
@@ -198,8 +232,7 @@ function remove(self::CallbackThread, callb)
 
         if newMonitor != self.monitor
             self.monitor = newMonitor
-            _pigpio_command(
-                self.control, _PI_CMD_NB, self.handle, self.monitor)
+            _pigpio_command(self.control, _PI_CMD_NB, self.handle, self.monitor)
         end
     end
 end
@@ -336,7 +369,8 @@ end
 
 """Returns count bytes from the command socket."""
 function rxbuf(self::Pi, count)
-    ext = readbytes(self.sl.s, count, all)
+    ext = Vector{UInt8}(undef, count)
+    readbytes!(self.sl.s, ext; all=true)
     return ext
 end
 
@@ -419,7 +453,7 @@ print(read(pi, 23))
 1
 ...
 """
-function read(self::Pi, gpio)
+function Base.read(self::Pi, gpio)
     return _u2i(_pigpio_command(self.sl, _PI_CMD_READ, gpio, 0))
 end
 
@@ -444,7 +478,7 @@ print(read(pi, 17))
 1
 ...
 """
-function write(self::Pi, gpio, level)
+function Base.write(self::Pi, gpio, level)
     return _u2i(_pigpio_command(self.sl, _PI_CMD_WRITE, gpio, level))
 end
 
@@ -466,8 +500,7 @@ set_PWM_dutycycle(pi, 4, 255) # PWM full on
 ...
 """
 function set_PWM_dutycycle(self::Pi, user_gpio, dutycycle)
-    return _u2i(_pigpio_command(
-        self.sl, _PI_CMD_PWM, user_gpio, Int(dutycycle)))
+    return _u2i(_pigpio_command(self.sl, _PI_CMD_PWM, user_gpio, Int(dutycycle)))
 end
 
 """
@@ -612,8 +645,7 @@ print(get_PWM_frequency(pi, 4))
 ...
 """
 function set_PWM_frequency(self::Pi, user_gpio, frequency)
-    return _u2i(
-        _pigpio_command(self.sl, _PI_CMD_PFS, user_gpio, frequency))
+    return _u2i(_pigpio_command(self.sl, _PI_CMD_PFS, user_gpio, frequency))
 end
 
 """
@@ -671,8 +703,7 @@ set_servo_pulsewidth(pi, 17, 2000) # safe clockwise
 ...
 """
 function set_servo_pulsewidth(self::Pi, user_gpio, pulsewidth)
-    return _u2i(_pigpio_command(
-        self.sl, _PI_CMD_SERVO, user_gpio, int(pulsewidth)))
+    return _u2i(_pigpio_command(self.sl, _PI_CMD_SERVO, user_gpio, int(pulsewidth)))
 end
 
 """
@@ -836,8 +867,7 @@ set_watchdog(pi, 23, 0)    # cancel watchdog on GPIO 23
 ...
 """
 function set_watchdog(self::Pi, user_gpio, wdog_timeout)
-    return _u2i(_pigpio_command(
-        self.sl, _PI_CMD_WDOG, user_gpio, Int(wdog_timeout)))
+    return _u2i(_pigpio_command(self.sl, _PI_CMD_WDOG, user_gpio, Int(wdog_timeout)))
 end
 
 """
@@ -1046,8 +1076,7 @@ function hardware_PWM(self::Pi, gpio, PWMfreq, PWMduty)
 # I PWMdutycycle
     extents = IOBuffer()
     extents =write(extents, 10)
-    return _u2i(_pigpio_command_ext(
-        self.sl, _PI_CMD_HP, gpio, PWMfreq, 4, extents))
+    return _u2i(_pigpio_command_ext(self.sl, _PI_CMD_HP, gpio, PWMfreq, 4, extents))
 end
 
 """
@@ -1138,8 +1167,7 @@ function custom_1(self, arg1=0, arg2=0, argx=[])
     ## extension ##
     # s len argx bytes
 
-    return u2i(_pigpio_command_ext(
-        self.sl, _PI_CMD_CF1, arg1, arg2, length(argx), [argx]))
+    return _u2i(_pigpio_command_ext(self.sl, _PI_CMD_CF1, arg1, arg2, length(argx), [argx]))
 end
 
 """
@@ -1173,16 +1201,11 @@ function custom_2(self, arg1=0, argx=[], retMax=8192)
     ## extension ##
     # s len argx bytes
 
-    # Don't raise exception.  Must release lock.
-    bytes = u2i(_pigpio_command_ext(
-    self.sl, _PI_CMD_CF2, arg1, retMax, length(argx), [argx], false))
-    if bytes > 0
-        data = rxbuf(bytes)
-    else
-        data = ""
+    return lock(self.sl.l) do
+        bytes = _u2i(_pigpio_command_ext_nolock(self.sl, _PI_CMD_CF2, arg1, retMax, length(argx), [argx]))
+        data = bytes > 0 ? rxbuf(self, bytes) : ""
+        return bytes, data
     end
-    unlock(self.sl.l)
-    return bytes, data
 end
 
 """
