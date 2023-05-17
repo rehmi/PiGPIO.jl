@@ -327,7 +327,7 @@ function func(self::WaitForEdge, gpio, level, tick)
 end
 
 mutable struct Pi
-    host::String
+    host::IPAddr
     port::Int
     connected::Bool
     sl::SockLock
@@ -1285,20 +1285,29 @@ success of the connection.  If the connection is established
 successfully [*connected*] will be true, otherwise false.
 
 ...
-pi = pigpio.pi()              # use defaults
-pi = pigpio.pi('mypi')       # specify host, default port
-pi = pigpio.pi('mypi', 7777) # specify host and port
+pi = PiGPIO.Pi()              # use defaults
+pi = PiGPIO.Pi("mypi")       # specify host, default port
+pi = PiGPIO.pi("mypi", 7777) # specify host and port
 
-pi = pigpio.pi()             # exit script if no connection
+pi = PiGPIO.Pi()             # exit script if no connection
 if not pi.connected
-exit()
+	exit()
+end
 ...
 """
 function Pi(; host = get(ENV, "PIGPIO_ADDR", ""), port = get(ENV, "PIGPIO_PORT", 8888))
-    port = Int(port)
+	if port isa AbstractString
+		port = Meta.parse(port)
+	else
+    	port = Int(port)
+	end
     if host == "" || host == nothing
         host = "localhost"
     end
+
+	if host isa AbstractString
+		host = getaddrinfo(host, IPv4)
+	end
 
     try
         sock = connect(host, port)
@@ -1317,12 +1326,13 @@ function Pi(; host = get(ENV, "PIGPIO_ADDR", ""), port = get(ENV, "PIGPIO_PORT",
         println("variables PIGPIO_ADDR/PIGPIO_PORT?")
         println("E.g. export PIGPIO_ADDR=soft, export PIGPIO_PORT=8888\n")
         println("Did you specify the correct Pi host/port in the")
-        println("Pi() function? E.g. Pi('soft', 8888))")
+        println("Pi() function? E.g. Pi(\"soft\", 8888))")
         println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
         throw(error)
     end
 end
 
+Pi(host::AbstractString, port::Integer=8888) = Pi(host=host, port=port)
 
 """Release pigpio resources.
 ...
